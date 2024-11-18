@@ -1,0 +1,24 @@
+{
+    "name": "HttpUpdate",
+    "version": "1.0.0",
+    "description": "Based on HTTPUpdate but it can use any class derived from Client. That is, you can update using Ethernet or WiFi.",
+    "keywords": "http, w5100, w5500, WiFi, Arduino, client, esp32, OTA",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/boazf/HttpUpdate.git"
+    },
+    "authors":
+    [
+      {
+        "name": "Boaz Feldboim",
+        "email": "boaz@feldbaum.name    ",
+      }
+    ],
+    "license": "Apache",
+    "dependencies": {
+      "amcewen/HttpClientEx": "~1.0.0"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+  }
