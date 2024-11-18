@@ -1,6 +1,6 @@
 {
     "name": "HttpUpdate",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Based on HTTPUpdate but it can use any class derived from Client. That is, you can update using Ethernet or WiFi.",
     "keywords": "http, w5100, w5500, WiFi, Arduino, client, esp32, OTA",
     "repository":
