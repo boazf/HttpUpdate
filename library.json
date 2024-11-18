@@ -17,7 +17,7 @@
     ],
     "license": "Apache",
     "dependencies": {
-      "amcewen/HttpClientEx": "~1.0.0"
+      "boazf/HttpClientEx": "~1.0.0"
     },
     "frameworks": "arduino",
     "platforms": "espressif32"
