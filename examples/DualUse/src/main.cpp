@@ -78,7 +78,6 @@ void setup()
 
     WiFiClient client;
 #endif // USE_WIFI
-  String url = String("http://otadrive.com/deviceapi/update?k=e1185de4-ba74-432c-8227-ed6959647f90&v=") + APP_VERSION + "&s=" + getChipId();
   String url = String("http://otadrive.com/deviceapi/update?k=") + API_KEY + "&v=" + APP_VERSION + "&s=" + getChipId();
   log_d("URL: %s\n", url.c_str());
   HttpUpdateResult result = httpUpdate.update(client, url, APP_VERSION);
