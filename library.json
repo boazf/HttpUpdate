@@ -15,7 +15,7 @@
         "email": "boaz@feldbaum.name"
       }
     ],
-    "license": "Apache",
+    "license": "Apache-2.0",
     "dependencies": {
       "boazf/HttpClientEx": "~1.0.0"
     },
