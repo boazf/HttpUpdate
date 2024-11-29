@@ -114,7 +114,7 @@ HttpUpdateResult HttpUpdate::update(Client& client, const String& url, const Str
 
     if(!http.begin(url))
     {
-        _lastError = HTTP_ERROR_API;
+        _setLastError(HTTP_ERROR_API);
         return HTTP_UPDATE_FAILED;
     }
     return handleUpdate(http, currentVersion, false);
@@ -130,7 +130,7 @@ HttpUpdateResult HttpUpdate::updateSpiffs(Client& client, const String& url, con
     HttpClientEx http(client);
     if(!http.begin(url))
     {
-        _lastError = HTTP_ERROR_API;
+        _setLastError(HTTP_ERROR_API);
         return HTTP_UPDATE_FAILED;
     }
     return handleUpdate(http, currentVersion, true);
@@ -254,7 +254,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
 
     if(code != 0) {
         log_e("HTTP error: %d\n", code);
-        _lastError = code;
+        _setLastError(code);
         return HTTP_UPDATE_FAILED;
     }
 
@@ -318,7 +318,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
             if(spiffs) {
                 const esp_partition_t* _partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
                 if(!_partition){
-                    _lastError = HTTP_UE_NO_PARTITION;
+                    _setLastError(HTTP_UE_NO_PARTITION);
                     return HTTP_UPDATE_FAILED;
                 }
 
@@ -329,7 +329,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
             } else {
                 int sketchFreeSpace = ESP.getFreeSketchSpace();
                 if(!sketchFreeSpace){
-                    _lastError = HTTP_UE_NO_PARTITION;
+                    _setLastError(HTTP_UE_NO_PARTITION);
                     return HTTP_UPDATE_FAILED;
                 }
 
@@ -340,7 +340,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
             }
 
             if(!startUpdate) {
-                _lastError = HTTP_UE_TOO_LESS_SPACE;
+                _setLastError(HTTP_UE_TOO_LESS_SPACE);
                 ret = HTTP_UPDATE_FAILED;
             } else {
                 // Warn main app we're starting up...
@@ -370,7 +370,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
                     uint8_t buf[4];
                     if(tcp->peekBytes(&buf[0], 4) != 4) {
                         log_e("peekBytes magic header failed\n");
-                        _lastError = HTTP_UE_BIN_VERIFY_HEADER_FAILED;
+                        _setLastError(HTTP_UE_BIN_VERIFY_HEADER_FAILED);
                         http.end();
                         return HTTP_UPDATE_FAILED;
                     }
@@ -380,7 +380,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
 //                    if(buf[0] != 0xE9) {
                     if(tcp->peek() != 0xE9) {
                         log_e("Magic header does not start with 0xE9\n");
-                        _lastError = HTTP_UE_BIN_VERIFY_HEADER_FAILED;
+                        _setLastError(HTTP_UE_BIN_VERIFY_HEADER_FAILED);
 //                        http.end();
                         return HTTP_UPDATE_FAILED;
 
@@ -391,7 +391,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
                     // check if new bin fits to SPI flash
                     if(bin_flash_size > ESP.getFlashChipRealSize()) {
                         log_e("New binary does not fit SPI Flash size\n");
-                        _lastError = HTTP_UE_BIN_FOR_WRONG_FLASH;
+                        _setLastError(HTTP_UE_BIN_FOR_WRONG_FLASH);
                         http.end();
                         return HTTP_UPDATE_FAILED;
                     }
@@ -416,7 +416,7 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
                 }
             }
         } else {
-            _lastError = HTTP_UE_SERVER_NOT_REPORT_SIZE;
+            _setLastError(HTTP_UE_SERVER_NOT_REPORT_SIZE);
             ret = HTTP_UPDATE_FAILED;
             log_e("Content-Length was 0 or wasn't set by Server?!\n");
         }
@@ -426,21 +426,17 @@ HttpUpdateResult HttpUpdate::handleUpdate(HttpClientEx& http, const String& curr
         ret = HTTP_UPDATE_NO_UPDATES;
         break;
     case HTTP_CODE_NOT_FOUND:
-        _lastError = HTTP_UE_SERVER_FILE_NOT_FOUND;
+        _setLastError(HTTP_UE_SERVER_FILE_NOT_FOUND);
         ret = HTTP_UPDATE_FAILED;
         break;
     case HTTP_CODE_FORBIDDEN:
-        _lastError = HTTP_UE_SERVER_FORBIDDEN;
+        _setLastError(HTTP_UE_SERVER_FORBIDDEN);
         ret = HTTP_UPDATE_FAILED;
         break;
     default:
-        _lastError = HTTP_UE_SERVER_WRONG_HTTP_CODE;
+        _setLastError(HTTP_UE_SERVER_WRONG_HTTP_CODE);
         ret = HTTP_UPDATE_FAILED;
         log_e("HTTP Code is (%d)\n", code);
-        for (int i = 0; http.available() && i < 1000; i++)
-        {
-            Serial.print((char)http.read());
-        }
         break;
     }
 
@@ -465,7 +461,7 @@ bool HttpUpdate::runUpdate(Stream& in, uint32_t size, String md5, int command)
     }
 
     if(!Update.begin(size, command, _ledPin, _ledOn)) {
-        _lastError = Update.getError();
+        _setLastError(Update.getError());
         Update.printError(error);
         error.trim(); // remove line ending
         log_e("Update.begin failed! (%s)\n", error.c_str());
@@ -478,7 +474,7 @@ bool HttpUpdate::runUpdate(Stream& in, uint32_t size, String md5, int command)
 
     if(md5.length()) {
         if(!Update.setMD5(md5.c_str())) {
-            _lastError = HTTP_UE_SERVER_FAULTY_MD5;
+            _setLastError(HTTP_UE_SERVER_FAULTY_MD5);
             log_e("Update.setMD5 failed! (%s)\n", md5.c_str());
             return false;
         }
@@ -487,7 +483,7 @@ bool HttpUpdate::runUpdate(Stream& in, uint32_t size, String md5, int command)
 // To do: the SHA256 could be checked if the server sends it
 
     if(Update.writeStream(in) != size) {
-        _lastError = Update.getError();
+        _setLastError(Update.getError());
         Update.printError(error);
         error.trim(); // remove line ending
         log_e("Update.writeStream failed! (%s)\n", error.c_str());
@@ -499,7 +495,7 @@ bool HttpUpdate::runUpdate(Stream& in, uint32_t size, String md5, int command)
     }
 
     if(!Update.end()) {
-        _lastError = Update.getError();
+        _setLastError(Update.getError());
         Update.printError(error);
         error.trim(); // remove line ending
         log_e("Update.end failed! (%s)\n", error.c_str());
